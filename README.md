@@ -20,7 +20,7 @@ Tasks are saved locally in your browser so they remain even after refreshing or 
 
 ### 1️⃣ Clone the repository
 ```bash
-git clone 
+git clone https://github.com/ashfaq120/TO-DO-LIST.git
 2️⃣ Navigate to the project folder
 bash
 Copy
