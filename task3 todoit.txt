@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>To-Do List App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <h1>To-Do List</h1>
+
+    <form id="todo-form" class="todo-form" autocomplete="off">
+      <input id="todo-input" type="text" placeholder="Add a new task..." />
+      <button type="submit">Add</button>
+    </form>
+
+    <section>
+      <ul id="todo-list" class="todo-list"></ul>
+    </section>
+
+    <div class="controls">
+      <button id="clear-btn">Clear Completed</button>
+      <button id="clear-all-btn">Clear All</button>
+    </div>
+
+    <footer class="footer">
+      <small>Saved locally in your browser</small>
+    </footer>
+  </main>
+
+  <script src="script.js"></script>
+<style>
+  /* Simple, modern styling */
+:root{
+  --bg1: #2017ca;
+  --bg2: #4e085f;
+  --card: #ffffff;
+  --muted: #8c8e8c;
+}
+
+*{box-sizing:border-box; margin:0; padding:0; font-family: 'Poppins', sans-serif;}
+
+body{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  padding:20px;
+}
+
+.app{
+  width:100%;
+  max-width:520px;
+  background: var(--card);
+  border-radius:12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  padding:22px;
+}
+
+h1{
+  margin-bottom:12px;
+  font-size:1.6rem;
+  color:#222;
+  text-align:center;
+}
+
+.todo-form{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+}
+
+.todo-form input{
+  flex:1;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-size:1rem;
+}
+
+.todo-form button{
+  padding:10px 14px;
+  border-radius:8px;
+  border:none;
+  background:linear-gradient(90deg,#3a1db8,#2575fc);
+  color:white;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.todo-list{
+  list-style:none;
+  margin-top:8px;
+  max-height:50vh;
+  overflow:auto;
+  padding-right:6px;
+}
+
+.todo-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #f0f0f0;
+  margin-bottom:8px;
+  background: #fbfbfb;
+}
+
+.todo-item.completed .text{
+  text-decoration:line-through;
+  color:var(--muted);
+  opacity:0.75;
+}
+
+.todo-item .text{
+  flex:1;
+  word-break:break-word;
+}
+
+.todo-item button.delete-btn{
+  border:none;
+  background:transparent;
+  color:#c0392b;
+  cursor:pointer;
+  font-weight:700;
+  padding:6px 8px;
+  border-radius:6px;
+}
+
+.controls{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+  justify-content:center;
+}
+
+.controls button{
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  background:transparent;
+  cursor:pointer;
+}
+
+.footer{
+  margin-top:12px;
+  text-align:center;
+  color:#666;
+  font-size:.85rem;
+}
+</style> 
+<script>
+  // Simple To-Do list with localStorage persistence
+
+const form = document.getElementById('todo-form');
+const input = document.getElementById('todo-input');
+const list = document.getElementById('todo-list');
+const clearBtn = document.getElementById('clear-btn');
+const clearAllBtn = document.getElementById('clear-all-btn');
+
+const STORAGE_KEY = 'my_todos_v1';
+
+// load saved todos or start empty
+let todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+}
+
+function createTodoElement(todo) {
+  const li = document.createElement('li');
+  li.className = 'todo-item' + (todo.done ? ' completed' : '');
+  li.dataset.id = todo.id;
+
+  // checkbox
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = !!todo.done;
+  checkbox.addEventListener('change', () => toggleTodo(todo.id));
+
+  // text
+  const span = document.createElement('span');
+  span.className = 'text';
+  span.textContent = todo.text;
+
+  // delete
+  const del = document.createElement('button');
+  del.className = 'delete-btn';
+  del.textContent = 'Delete';
+  del.addEventListener('click', () => deleteTodo(todo.id));
+
+  li.appendChild(checkbox);
+  li.appendChild(span);
+  li.appendChild(del);
+
+  return li;
+}
+
+function render() {
+  list.innerHTML = '';
+  if (todos.length === 0) {
+    const empty = document.createElement('p');
+    empty.style.color = '#666';
+    empty.style.textAlign = 'center';
+    empty.textContent = 'No tasks yet — add your first one!';
+    list.appendChild(empty);
+    return;
+  }
+
+  todos.forEach(todo => {
+    list.appendChild(createTodoElement(todo));
+  });
+}
+
+// operations
+function addTodo(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  const newTodo = {
+    id: Date.now().toString(),
+    text: trimmed,
+    done: false
+  };
+  todos.unshift(newTodo); // newest on top
+  save();
+  render();
+}
+
+function toggleTodo(id) {
+  todos = todos.map(t => t.id === id ? {...t, done: !t.done } : t);
+  save();
+  render();
+}
+
+function deleteTodo(id) {
+  todos = todos.filter(t => t.id !== id);
+  save();
+  render();
+}
+
+function clearCompleted() {
+  todos = todos.filter(t => !t.done);
+  save();
+  render();
+}
+
+function clearAll() {
+  if (!confirm('Clear ALL tasks? This cannot be undone.')) return;
+  todos = [];
+  save();
+  render();
+}
+
+// form handling
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  addTodo(input.value);
+  input.value = '';
+  input.focus();
+});
+
+clearBtn.addEventListener('click', clearCompleted);
+clearAllBtn.addEventListener('click', clearAll);
+
+// initialize UI
+render();
+</script> 
+</body>
+</html>
